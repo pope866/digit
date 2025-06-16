@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digit Hybrid Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #1e88e5;
+      --primary-dark: #0d47a1;
+      --primary-light: #42a5f5;
+      --secondary-color: #ff5722;
+      --success-color: #2e7d32;
+      --error-color: #c62828;
+      --bg-dark: #121212;
+      --bg-darker: #0a0a0a;
+      --bg-light: #1e1e1e;
+      --bg-lighter: #2d2d2d;
+      --text-primary: #ffffff;
+      --text-secondary: #b0b0b0;
+      --border-color: #333;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(30, 136, 229, 0.1) 0%, transparent 20%),
+        radial-gradient(circle at 90% 80%, rgba(255, 87, 34, 0.1) 0%, transparent 20%);
+    }
+    
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+      position: relative;
+    }
+    
+    .header {
+      margin-bottom: 30px;
+      position: relative;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .header h1 {
+      margin: 0;
+      font-size: 2.5rem;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+      position: relative;
+    }
+    
+    .header h1::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+      border-radius: 3px;
+    }
+    
+    .control-panel {
+      background-color: var(--bg-light);
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 30px;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .control-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    }
+    
+    .mode-selector {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+      min-width: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: 0.5s;
+    }
+    
+    .btn:hover {
+      background-color: var(--primary-light);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .btn:hover::before {
+      left: 100%;
+    }
+    
+    .btn.active {
+      background-color: var(--primary-dark);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    
+    .input-group {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+    
+    .input-field {
+      padding: 12px 15px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-lighter);
+      color: var(--text-primary);
+      font-size: 16px;
+      width: 80px;
+      text-align: center;
+      transition: all 0.3s;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .input-field:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.3);
+    }
+    
+    .digit-display {
+      font-size: 80px;
+      font-weight: bold;
+      margin: 30px auto;
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--bg-light);
+      border: 4px solid var(--primary-color);
+      box-shadow: 
+        0 0 25px rgba(30, 136, 229, 0.4),
+        inset 0 0 15px rgba(30, 136, 229, 0.2);
+      position: relative;
+      transition: all 0.3s;
+    }
+    
+    .digit-display::before {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: -5px;
+      right: -5px;
+      bottom: -5px;
+      border-radius: 50%;
+      border: 2px solid rgba(30, 136, 229, 0.3);
+      animation: rotate 6s linear infinite;
+      pointer-events: none;
+    }
+    
+    .stats-container {
+      display: flex;
+      justify-content: center;
+      gap: 25px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    
+    .stat-box {
+      background-color: var(--bg-light);
+      border-radius: 12px;
+      padding: 20px;
+      min-width: 160px;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
+      transition: transform 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .stat-box:hover {
+      transform: translateY(-5px);
+    }
+    
+    .stat-box::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: bold;
+      margin: 10px 0;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .stat-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .history-container {
+      background-color: var(--bg-light);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+      min-height: 80px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    .history-item {
+      padding: 10px 15px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 14px;
+      animation: fadeIn 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    
+    .correct {
+      background-color: var(--success-color);
+      color: white;
+    }
+    
+    .incorrect {
+      background-color: var(--error-color);
+      color: white;
+    }
+    
+    .chart-container {
+      background-color: var(--bg-light);
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 30px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+    
+    .chart-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+      border-radius: 15px 15px 0 0;
+    }
+    
+    .frequency-container {
+      display: flex;
+      justify-content: center;
+      gap: 25px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    
+    .frequency-box {
+      background-color: var(--bg-light);
+      border-radius: 12px;
+      padding: 20px;
+      min-width: 220px;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
+      transition: transform 0.3s;
+    }
+    
+    .frequency-box:hover {
+      transform: translateY(-5px);
+    }
+    
+    .volatility-selector {
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: center;
+    }
+    
+    select {
+      padding: 12px 20px;
+      border-radius: 8px;
+      background-color: var(--bg-lighter);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      font-size: 16px;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 15px center;
+      background-size: 15px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      min-width: 300px;
+      text-align: center;
+    }
+    
+    select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.3);
+    }
+    
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 200px;
+      background-color: var(--bg-lighter);
+      color: var(--text-primary);
+      text-align: center;
+      border-radius: 6px;
+      padding: 10px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 14px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+    }
+    
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+    
+    .glow {
+      animation: glow 2s infinite alternate;
+    }
+    
+    @keyframes glow {
+      from {
+        box-shadow: 0 0 10px -10px var(--primary-color);
+      }
+      to {
+        box-shadow: 0 0 20px 5px var(--primary-color);
+      }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .pulse {
+      animation: pulse 0.5s ease;
+    }
+    
+    .floating {
+      animation: floating 3s ease-in-out infinite;
+    }
+    
+    @keyframes floating {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding: 20px 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+      border-top: 1px solid var(--border-color);
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .container {
+        padding: 15px;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .mode-selector {
+        gap: 10px;
+      }
+      
+      .btn {
+        padding: 10px 15px;
+        min-width: 100px;
+        font-size: 14px;
+      }
+      
+      .digit-display {
+        width: 120px;
+        height: 120px;
+        font-size: 60px;
+      }
+      
+      .stats-container, .frequency-container {
+        gap: 15px;
+      }
+      
+      .stat-box, .frequency-box {
+        min-width: 120px;
+        padding: 15px;
+      }
+      
+      select {
+        min-width: 250px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 1.8rem;
+      }
+      
+      .mode-selector {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .btn {
+        width: 100%;
+      }
+      
+      .input-group {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-chart-line"></i> Digit Hybrid Tracker</h1>
+    </div>
+
+    <div class="volatility-selector">
+      <select id="volatilitySelect">
+        <option value="R_10">Volatility 10 Index</option>
+        <option value="R_25">Volatility 25 Index</option>
+        <option value="R_50">Volatility 50 Index</option>
+        <option value="R_75">Volatility 75 Index</option>
+        <option value="R_100">Volatility 100 Index</option>
+        <option value="R_10_1s">Volatility 10 (1s) Index</option>
+        <option value="R_25_1s">Volatility 25 (1s) Index</option>
+        <option value="R_50_1s">Volatility 50 (1s) Index</option>
+        <option value="R_75_1s">Volatility 75 (1s) Index</option>
+        <option value="R_100_1s">Volatility 100 (1s) Index</option>
+      </select>
+    </div>
+
+    <div class="control-panel">
+      <div class="mode-selector">
+        <button id="matchesBtn" class="btn"><i class="fas fa-equals"></i> MATCHES</button>
+        <button id="overBtn" class="btn"><i class="fas fa-greater-than"></i> OVER</button>
+        <button id="riseBtn" class="btn"><i class="fas fa-arrows-alt-v"></i> RISE/FALL</button>
+        <button id="evenBtn" class="btn"><i class="fas fa-divide"></i> EVEN/ODD</button>
+      </div>
+
+      <div class="input-group">
+        <input type="number" id="predictionInput" class="input-field" min="0" max="9" placeholder="0-9">
+        <button id="predictBtn" class="btn glow"><i class="fas fa-bullseye"></i> PREDICT</button>
+      </div>
+    </div>
+
+    <div class="digit-display floating" id="currentDigit">0</div>
+
+    <div class="stats-container">
+      <div class="stat-box">
+        <div class="stat-value" id="correctRate">0%</div>
+        <div class="stat-label" id="correctLabel">CORRECT</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="incorrectRate">0%</div>
+        <div class="stat-label" id="incorrectLabel">INCORRECT</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="totalPredictions">0</div>
+        <div class="stat-label">TOTAL PREDICTIONS</div>
+      </div>
+    </div>
+
+    <div class="history-container" id="predictionHistory">
+      <div style="color: var(--text-secondary); font-style: italic;">Prediction history will appear here</div>
+    </div>
+
+    <div class="frequency-container">
+      <div class="frequency-box">
+        <div class="stat-label"><i class="fas fa-chart-pie"></i> MOST FREQUENT</div>
+        <div class="stat-value" id="mostFrequent">-</div>
+      </div>
+      <div class="frequency-box">
+        <div class="stat-label"><i class="fas fa-chart-line"></i> LEAST FREQUENT</div>
+        <div class="stat-value" id="leastFrequent">-</div>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <canvas id="digitChart"></canvas>
+    </div>
+    
+    <div class="footer">
+      <p>Digit Hybrid Tracker &copy; 2023 | Analyze and predict digit patterns</p>
+    </div>
+  </div>
+
+  <script>
+    // App state
+    const state = {
+      activeMode: null,
+      predictionValue: null,
+      predictionHistory: [],
+      digitHistory: [],
+      wsConnection: null,
+      digitChart: null,
+      lastTick: null
+    };
+
+    // DOM elements
+    const elements = {
+      currentDigit: document.getElementById('currentDigit'),
+      predictionInput: document.getElementById('predictionInput'),
+      predictionHistory: document.getElementById('predictionHistory'),
+      correctRate: document.getElementById('correctRate'),
+      incorrectRate: document.getElementById('incorrectRate'),
+      correctLabel: document.getElementById('correctLabel'),
+      incorrectLabel: document.getElementById('incorrectLabel'),
+      totalPredictions: document.getElementById('totalPredictions'),
+      mostFrequent: document.getElementById('mostFrequent'),
+      leastFrequent: document.getElementById('leastFrequent'),
+      volatilitySelect: document.getElementById('volatilitySelect'),
+      matchesBtn: document.getElementById('matchesBtn'),
+      overBtn: document.getElementById('overBtn'),
+      riseBtn: document.getElementById('riseBtn'),
+      evenBtn: document.getElementById('evenBtn'),
+      predictBtn: document.getElementById('predictBtn')
+    };
+
+    // Initialize Chart
+    function initChart() {
+      const ctx = document.getElementById('digitChart').getContext('2d');
+      state.digitChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+          datasets: [{
+            label: 'Digit Frequency',
+            data: Array(10).fill(0),
+            backgroundColor: [
+              'rgba(30, 136, 229, 0.7)',
+              'rgba(255, 87, 34, 0.7)',
+              'rgba(76, 175, 80, 0.7)',
+              'rgba(156, 39, 176, 0.7)',
+              'rgba(255, 193, 7, 0.7)',
+              'rgba(0, 150, 136, 0.7)',
+              'rgba(244, 67, 54, 0.7)',
+              'rgba(63, 81, 181, 0.7)',
+              'rgba(233, 30, 99, 0.7)',
+              'rgba(139, 195, 74, 0.7)'
+            ],
+            borderColor: 'rgba(255, 255, 255, 0.2)',
+            borderWidth: 1,
+            borderRadius: 5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const total = state.digitHistory.length;
+                  const count = context.raw;
+                  const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+                  return `Count: ${count} (${percentage}%)`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: '#b0b0b0'
+              },
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              }
+            },
+            x: {
+              ticks: {
+                color: '#b0b0b0'
+              },
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Update chart with new data
+    function updateChart() {
+      const freq = Array(10).fill(0);
+      state.digitHistory.forEach(d => freq[d]++);
+      state.digitChart.data.datasets[0].data = freq;
+      state.digitChart.update();
+    }
+
+    // Calculate and update frequency stats
+    function updateFrequencyStats() {
+      const freq = Array(10).fill(0);
+      state.digitHistory.forEach(d => freq[d]++);
+      
+      const max = Math.max(...freq);
+      const min = Math.min(...freq);
+      
+      const mostDigits = freq.map((count, digit) => ({ digit, count }))
+        .filter(item => item.count === max)
+        .map(item => item.digit);
+      
+      const leastDigits = freq.map((count, digit) => ({ digit, count }))
+        .filter(item => item.count === min)
+        .map(item => item.digit);
+      
+      const total = state.digitHistory.length;
+      
+      elements.mostFrequent.textContent = mostDigits.map(d => 
+        `${d} (${((freq[d] / total) * 100).toFixed(1)}%)`).join(', ');
+      
+      elements.leastFrequent.textContent = leastDigits.map(d => 
+        `${d} (${((freq[d] / total) * 100).toFixed(1)}%)`).join(', ');
+    }
+
+    // Update prediction stats
+    function updatePredictionStats() {
+      const total = state.predictionHistory.length;
+      if (total === 0) return;
+      
+      const correct = state.predictionHistory.filter(result => result).length;
+      const correctPercentage = Math.round((correct / total) * 100);
+      
+      elements.correctRate.textContent = `${correctPercentage}%`;
+      elements.incorrectRate.textContent = `${100 - correctPercentage}%`;
+      elements.totalPredictions.textContent = total;
+    }
+
+    // Add prediction result to history
+    function addToHistory(result) {
+      // Clear placeholder if it exists
+      if (elements.predictionHistory.children.length === 1 && 
+          elements.predictionHistory.firstChild.textContent.includes("history will appear here")) {
+        elements.predictionHistory.innerHTML = '';
+      }
+      
+      const historyItem = document.createElement('div');
+      historyItem.className = `history-item ${result ? 'correct' : 'incorrect'}`;
+      
+      let icon, label = '';
+      switch (state.activeMode) {
+        case 'matches':
+          icon = result ? 'fa-check' : 'fa-times';
+          label = result ? 'MATCH' : 'DIFFER';
+          break;
+        case 'over':
+          icon = result ? 'fa-check' : 'fa-times';
+          label = result ? 'OVER' : 'UNDER';
+          break;
+        case 'rise':
+          icon = result ? 'fa-arrow-up' : 'fa-arrow-down';
+          label = result ? 'RISE' : 'FALL';
+          break;
+        case 'even':
+          icon = result ? 'fa-check' : 'fa-times';
+          label = result ? 'EVEN' : 'ODD';
+          break;
+      }
+      
+      historyItem.innerHTML = `<i class="fas ${icon}"></i> ${label}`;
+      elements.predictionHistory.appendChild(historyItem);
+      
+      // Keep only last 20 items
+      if (elements.predictionHistory.children.length > 20) {
+        elements.predictionHistory.removeChild(elements.predictionHistory.firstChild);
+      }
+    }
+
+    // Set active mode
+    function setActiveMode(mode) {
+      state.activeMode = mode;
+      
+      // Reset button states
+      elements.matchesBtn.classList.remove('active');
+      elements.overBtn.classList.remove('active');
+      elements.riseBtn.classList.remove('active');
+      elements.evenBtn.classList.remove('active');
+      
+      // Set active button
+      switch (mode) {
+        case 'matches':
+          elements.matchesBtn.classList.add('active');
+          elements.correctLabel.textContent = 'MATCHES';
+          elements.incorrectLabel.textContent = 'DIFFERS';
+          break;
+        case 'over':
+          elements.overBtn.classList.add('active');
+          elements.correctLabel.textContent = 'OVER';
+          elements.incorrectLabel.textContent = 'UNDER';
+          break;
+        case 'rise':
+          elements.riseBtn.classList.add('active');
+          elements.correctLabel.textContent = 'RISES';
+          elements.incorrectLabel.textContent = 'FALLS';
+          break;
+        case 'even':
+          elements.evenBtn.classList.add('active');
+          elements.correctLabel.textContent = 'EVEN';
+          elements.incorrectLabel.textContent = 'ODD';
+          break;
+      }
+    }
+
+    // Process new digit
+    function processNewDigit(digit, quote) {
+      // Update display with animation
+      elements.currentDigit.textContent = digit;
+      elements.currentDigit.classList.add('pulse');
+      setTimeout(() => elements.currentDigit.classList.remove('pulse'), 500);
+      
+      // Add to digit history and update chart
+      state.digitHistory.push(digit);
+      if (state.digitHistory.length > 500) state.digitHistory.shift();
+      updateChart();
+      updateFrequencyStats();
+      
+      // Check prediction if in active mode
+      if (state.activeMode && state.activeMode !== 'rise') {
+        let result = false;
+        
+        switch (state.activeMode) {
+          case 'matches':
+            result = (digit === state.predictionValue);
+            break;
+          case 'over':
+            result = (digit > state.predictionValue);
+            break;
+          case 'even':
+            result = (digit % 2 === 0);
+            break;
+        }
+        
+        state.predictionHistory.push(result);
+        addToHistory(result);
+        updatePredictionStats();
+      }
+      
+      // Special handling for rise/fall mode
+      if (state.activeMode === 'rise' && state.lastTick !== null) {
+        const result = (quote > state.lastTick);
+        state.predictionHistory.push(result);
+        addToHistory(result);
+        updatePredictionStats();
+      }
+      
+      state.lastTick = quote;
+    }
+
+    // WebSocket connection
+    function connectWebSocket(symbol) {
+      if (state.wsConnection) {
+        state.wsConnection.close();
+      }
+      
+      state.wsConnection = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=1089');
+      
+      state.wsConnection.onopen = () => {
+        // Request historical data
+        state.wsConnection.send(JSON.stringify({
+          ticks_history: symbol,
+          count: 100,
+          end: "latest",
+          style: "ticks"
+        }));
+        
+        // Subscribe to live ticks
+        state.wsConnection.send(JSON.stringify({
+          ticks: symbol
+        }));
+      };
+      
+      state.wsConnection.onmessage = (msg) => {
+        const data = JSON.parse(msg.data);
+        
+        if (data.history) {
+          // Process historical data
+          const digits = data.history.prices.map(price => {
+            const quote = parseFloat(price);
+            return parseInt(quote.toString().slice(-1));
+          });
+          
+          state.digitHistory = digits;
+          updateChart();
+          updateFrequencyStats();
+        }
+        
+        if (data.tick) {
+          // Process live tick
+          const tick = data.tick;
+          const quote = parseFloat(tick.quote);
+          const digit = parseInt(quote.toString().slice(-1));
+          
+          processNewDigit(digit, quote);
+        }
+      };
+      
+      state.wsConnection.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+      
+      state.wsConnection.onclose = () => {
+        console.log('WebSocket connection closed');
+      };
+    }
+
+    // Event listeners
+    elements.matchesBtn.addEventListener('click', () => setActiveMode('matches'));
+    elements.overBtn.addEventListener('click', () => setActiveMode('over'));
+    elements.riseBtn.addEventListener('click', () => setActiveMode('rise'));
+    elements.evenBtn.addEventListener('click', () => setActiveMode('even'));
+    
+    elements.predictBtn.addEventListener('click', () => {
+      const value = parseInt(elements.predictionInput.value);
+      
+      if (isNaN(value) || value < 0 || value > 9) {
+        alert('Please enter a valid digit between 0 and 9');
+        return;
+      }
+      
+      state.predictionValue = value;
+      
+      if (state.activeMode === 'matches') {
+        alert(`Prediction set: Digit will MATCH ${value}`);
+      } else if (state.activeMode === 'over') {
+        alert(`Prediction set: Digit will be OVER ${value}`);
+      }
+    });
+    
+    elements.volatilitySelect.addEventListener('change', () => {
+      connectWebSocket(elements.volatilitySelect.value);
+    });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      initChart();
+      connectWebSocket(elements.volatilitySelect.value);
+      
+      // Add tooltips to buttons
+      elements.matchesBtn.title = "Predict if the next digit matches your input";
+      elements.overBtn.title = "Predict if the next digit is over your input";
+      elements.riseBtn.title = "Predict if the next digit will rise from the previous";
+      elements.evenBtn.title = "Predict if the next digit is even";
+    });
+  </script>
+</body>
+</html>
